@@ -8,6 +8,9 @@
 
 > [!NOTE]
 > This application is **not developed by The Indie Stone** and is **not affiliated with them** in any way.
+> Zomdroid ships **no part of the game** — no code, no assets, no binaries. You supply your own legally
+> owned copy. See [NOTICE](NOTICE.md) for the full statement, the changes the launcher makes to your
+> own copy on your device, and every third-party component and its licence.
 
 ## Features
 
@@ -33,7 +36,7 @@ Planned features in order of priority:
 
 ## Prebuilt binaries and JARs
 
-Prebuilt binaries and JARs are located in the `app/src/main/assets/dependencies` folder,  
+Prebuilt binaries and JARs are located in the `app/src/main/assets/bundles` folder,  
 **except** for **Box64** and **GLFW**, which are built alongside the Zomdroid APK.
 
 All Zomdroid dependencies—**except Box64 and GLFW**—can be either:
@@ -50,6 +53,9 @@ This is an independent project. To help keep it going, financial contributions a
 Please report issues or suggest features via [GitHub Issues](https://github.com/udarmolota/zomdroid/issues)
 
 ## Credits & Third-Party Sources
+
+Versions and licences for everything below are listed in [NOTICE](NOTICE.md).
+
 - [OpenJDK](https://github.com/openjdk/jdk) (Android port by [PojavLauncherTeam](https://github.com/PojavLauncherTeam/android-openjdk-build-multiarch)) - Used as the Java backend
 
 - [Box64](https://github.com/ptitSeb/box64) - Used as the emulation backend
