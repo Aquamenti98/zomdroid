@@ -33,9 +33,12 @@ public class GameLauncher {
         com.zomdroid.patch.LightingTransmissionPatchApplier.restoreOriginalIfStubbed(gameInstance);
         // Restore the two ZNetStatistics field names the stale Android RakNet still looks up
         // (renamed in 42.15, native never rebuilt -> NoSuchFieldError on statistics-enabled
-        // servers). The installer swaps a pre-patched class into NEW instances; running here too
-        // covers instances created by an older launcher, without reinstalling the game.
+        // servers). Runs at every launch, so instances created by any launcher version are covered.
         com.zomdroid.patch.ZNetStatisticsPatchApplier.applyIfNeeded(gameInstance);
+        // 42.15/42.17: empty MainScreenState.printSpecs(), whose oshi hardware walk dies on
+        // Android before the player can reach anything. Same deal as above — every launch, so
+        // older instances are covered too.
+        com.zomdroid.patch.PrintSpecsPatchApplier.applyIfNeeded(gameInstance);
         // Select safe native implementations after the class-level patches are known to be ready.
         com.zomdroid.patch.NativeLibraryWorkarounds.disableIncompleteNativeLibraries(gameInstance);
         // Build 42.12+'s ARM64 PathFind implementation is under test after reports of characters
