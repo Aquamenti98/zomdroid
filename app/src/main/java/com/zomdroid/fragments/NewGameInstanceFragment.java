@@ -152,10 +152,13 @@ public class NewGameInstanceFragment extends Fragment {
                     .show();
         });
 
-        // Shortcut to the JVM arguments block, where the Build 42 set is one button away. The
-        // arguments are a global setting, so this works before the instance even exists.
-        binding.newGameInstanceOpenSettingsTv.setOnClickListener(v ->
-                Navigation.findNavController(v).navigate(R.id.settings_fragment));
+        // This used to be a shortcut to the JVM arguments block, on the reasoning that the
+        // arguments were global and could therefore be set before the instance existed. They are
+        // per-instance now, so there is nothing here for it to point at: the instance being
+        // described on this screen has not been created yet. Nothing is lost - creating an
+        // instance applies the matching preset by itself, and the dialog that follows opens the
+        // new instance's settings on its "presets" button.
+        binding.newGameInstanceOpenSettingsTv.setVisibility(View.GONE);
 
         // Browse button for game ZIP
         binding.newGameInstanceFilesBrowseIb.setOnClickListener(v ->

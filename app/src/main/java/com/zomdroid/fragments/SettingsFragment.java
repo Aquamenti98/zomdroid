@@ -25,7 +25,16 @@ import com.zomdroid.game.SuggestedPreset;
 import com.zomdroid.input.GamepadManager;
 
 public class SettingsFragment extends Fragment {
+    /** Name of the instance whose settings this screen edits, passed by the card's gear button. */
+    public static final String ARG_INSTANCE = "instance";
+
     private FragmentSettingsBinding binding;
+    /**
+     * The instance being edited. With no argument (or an unknown name) this reads and writes the
+     * app-wide values, which keeps the screen usable if it is ever reached without a card.
+     */
+    private com.zomdroid.game.InstanceSettings settings;
+    private String instanceName;
     // Set once the renderer spinner has delivered its initial restore callback, so the NG_GL4ES
     // warning fires only for a deliberate change by the user.
     private boolean rendererSelectionRestored = false;
@@ -39,6 +48,9 @@ public class SettingsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        instanceName = getArguments() != null ? getArguments().getString(ARG_INSTANCE) : null;
+        settings = new com.zomdroid.game.InstanceSettings(instanceName);
+
         setUpPresetCard();
 
         // Renderer
@@ -48,12 +60,12 @@ public class SettingsFragment extends Fragment {
             LauncherPreferences.Renderer.values());
         rendererArrayAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
         binding.settingsRendererS.setAdapter(rendererArrayAdapter);
-        binding.settingsRendererS.setSelection(rendererArrayAdapter.getPosition(LauncherPreferences.requireSingleton().getRenderer()));
+        binding.settingsRendererS.setSelection(rendererArrayAdapter.getPosition(settings.getRenderer()));
         binding.settingsRendererS.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 LauncherPreferences.Renderer renderer = (LauncherPreferences.Renderer) parent.getSelectedItem();
-                LauncherPreferences.requireSingleton().setRenderer(renderer);
+                settings.setRenderer(renderer);
                 // The spinner fires this once while being restored, before the user touches
                 // anything. Warn only on a real choice, or opening Settings would greet everyone
                 // with a dialog about a renderer they already use.
@@ -151,7 +163,7 @@ public class SettingsFragment extends Fragment {
         vulkanDriverAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
         binding.settingsVulkanDriverS.setAdapter(vulkanDriverAdapter);
         binding.settingsVulkanDriverS.setSelection(
-                vulkanDriverAdapter.getPosition(LauncherPreferences.requireSingleton().getVulkanDriver())
+                vulkanDriverAdapter.getPosition(settings.getVulkanDriver())
         );
 
         final boolean[] isInitialSelection = { true };
@@ -162,7 +174,7 @@ public class SettingsFragment extends Fragment {
                 LauncherPreferences.VulkanDriver vulkanDriver =
                         (LauncherPreferences.VulkanDriver) parent.getSelectedItem();
 
-                LauncherPreferences.requireSingleton().setVulkanDriver(vulkanDriver);
+                settings.setVulkanDriver(vulkanDriver);
 
                 if (isInitialSelection[0]) {
                     isInitialSelection[0] = false;
@@ -222,7 +234,7 @@ public class SettingsFragment extends Fragment {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 binding.settingsResolutionScalePercentTv.setText(getResources().getString(R.string.percentage_format, progress));
-                LauncherPreferences.requireSingleton().setRenderScale((float) progress / 100);
+                settings.setRenderScale((float) progress / 100);
             }
 
             @Override
@@ -232,32 +244,15 @@ public class SettingsFragment extends Fragment {
             public void onStopTrackingTouch(SeekBar seekBar) {}
         });
 
-        binding.settingsResolutionScaleSb.setProgress((int) (LauncherPreferences.requireSingleton().getRenderScale() * 100));
+        binding.settingsResolutionScaleSb.setProgress((int) (settings.getRenderScale() * 100));
 
         // The Audio API selector is gone: OpenSL ES is retired and AAudio is the only backend now.
         // See LauncherPreferences.getAudioAPI() for why.
 
-        // Theme
-        ArrayAdapter<LauncherPreferences.ThemeMode> themeAdapter = new ArrayAdapter<>(
-            requireContext(),
-            R.layout.spinner_item,
-            LauncherPreferences.ThemeMode.values());
-        themeAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
-        binding.settingsThemeS.setAdapter(themeAdapter);
-        binding.settingsThemeS.setSelection(themeAdapter.getPosition(LauncherPreferences.requireSingleton().getThemeMode()));
-        binding.settingsThemeS.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                LauncherPreferences.ThemeMode mode = (LauncherPreferences.ThemeMode) parent.getSelectedItem();
-                LauncherPreferences.requireSingleton().setThemeMode(mode);
-                AppCompatDelegate.setDefaultNightMode(mode.nightMode);
-            }
+        // The theme is app-wide and lives in AppSettingsFragment now; this screen edits one
+        // instance.
 
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
-        });
-
-        binding.settingsJargsEt.setText(LauncherPreferences.requireSingleton().getJvmArgs());
+        binding.settingsJargsEt.setText(settings.getJvmArgs());
 
         binding.settingsJargsEt.addTextChangedListener(new TextWatcher() {
             @Override
@@ -269,7 +264,7 @@ public class SettingsFragment extends Fragment {
             @Override
             public void afterTextChanged(Editable s) {
                 String args = s.toString().trim();
-                LauncherPreferences.requireSingleton().setJvmArgs(args);
+                settings.setJvmArgs(args);
                 binding.settingsJargsApplyB42Btn.setEnabled(!isBuild42SetApplied(args));
             }
         });
@@ -291,7 +286,7 @@ public class SettingsFragment extends Fragment {
                 !isBuild42SetApplied(binding.settingsJargsEt.getText().toString()));
 
         // Enviroment variables
-        binding.settingsEnvVarsEt.setText(LauncherPreferences.requireSingleton().getEnvVars());
+        binding.settingsEnvVarsEt.setText(settings.getEnvVars());
 
         binding.settingsEnvVarsEt.addTextChangedListener(new TextWatcher() {
             @Override
@@ -302,7 +297,7 @@ public class SettingsFragment extends Fragment {
 
             @Override
             public void afterTextChanged(Editable s) {
-                LauncherPreferences.requireSingleton().setEnvVars(s.toString().trim());
+                settings.setEnvVars(s.toString().trim());
                 syncShrinkSpinner();
             }
         });
@@ -311,38 +306,38 @@ public class SettingsFragment extends Fragment {
 
         setUpTextureShrinkSpinner();
 
-        binding.settingsMemorySaverSwitch.setChecked(LauncherPreferences.requireSingleton().isMemorySaver());
+        binding.settingsMemorySaverSwitch.setChecked(settings.isMemorySaver());
         binding.settingsMemorySaverSwitch.setOnCheckedChangeListener((v, isChecked) ->
-                LauncherPreferences.requireSingleton().setMemorySaver(isChecked));
+                settings.setMemorySaver(isChecked));
 
         // The F10 backup is opt-in behind a priced warning: the copy is world-sized (players report
         // 300-600 MB) and the game visibly freezes while it is written. Turning it ON requires
         // reading and accepting that; turning it off is one tap.
-        binding.settingsBackupSwitch.setChecked(LauncherPreferences.requireSingleton().isQuickSaveBackup());
+        binding.settingsBackupSwitch.setChecked(settings.isQuickSaveBackup());
         binding.settingsBackupSwitch.setOnCheckedChangeListener((v, isChecked) -> {
             if (!isChecked) {
-                LauncherPreferences.requireSingleton().setQuickSaveBackup(false);
+                settings.setQuickSaveBackup(false);
                 return;
             }
-            if (LauncherPreferences.requireSingleton().isQuickSaveBackup()) return; // restore echo
+            if (settings.isQuickSaveBackup()) return; // restore echo
             new AlertDialog.Builder(requireContext())
                     .setTitle(R.string.backup_warning_title)
                     .setMessage(R.string.backup_warning_message)
                     .setPositiveButton(R.string.dialog_button_confirm, (d, w) ->
-                            LauncherPreferences.requireSingleton().setQuickSaveBackup(true))
+                            settings.setQuickSaveBackup(true))
                     .setNegativeButton(R.string.dialog_button_cancel, (d, w) ->
                             binding.settingsBackupSwitch.setChecked(false))
                     .setOnCancelListener(d -> binding.settingsBackupSwitch.setChecked(false))
                     .show();
         });
 
-        binding.settingsDebugSwitch.setChecked(LauncherPreferences.requireSingleton().isDebug());
+        binding.settingsDebugSwitch.setChecked(settings.isDebug());
         binding.settingsDebugSwitch.setOnCheckedChangeListener((v, isChecked) ->
-                LauncherPreferences.requireSingleton().setDebug(isChecked));
+                settings.setDebug(isChecked));
 
-        binding.touchControlsSwitch.setChecked(LauncherPreferences.requireSingleton().isTouchControlsEnabled());
+        binding.touchControlsSwitch.setChecked(settings.isTouchControlsEnabled());
         binding.touchControlsSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            LauncherPreferences.requireSingleton().setTouchControlsEnabled(isChecked);
+            settings.setTouchControlsEnabled(isChecked);
             GamepadManager.setTouchOverride(isChecked);
             Toast.makeText(requireContext(),
                 isChecked ? getString(R.string.touch_controls_enabled_toast)
@@ -350,9 +345,9 @@ public class SettingsFragment extends Fragment {
                 Toast.LENGTH_SHORT).show();
         });
 
-        binding.vibrateOnTouchSwitch.setChecked(LauncherPreferences.requireSingleton().isVibrateOnTouch());
+        binding.vibrateOnTouchSwitch.setChecked(settings.isVibrateOnTouch());
         binding.vibrateOnTouchSwitch.setOnCheckedChangeListener((buttonView, isChecked) ->
-                LauncherPreferences.requireSingleton().setVibrateOnTouch(isChecked));
+                settings.setVibrateOnTouch(isChecked));
 
         binding.settingsJargsInfo.setOnClickListener(v -> {
             new androidx.appcompat.app.AlertDialog.Builder(requireContext())
@@ -460,7 +455,7 @@ public class SettingsFragment extends Fragment {
     private void updatePresetStatus() {
         if (binding == null) return;
         for (SuggestedPreset preset : SuggestedPreset.values()) {
-            if (preset.describeChanges(requireContext()).isEmpty()) {
+            if (preset.describeChanges(requireContext(), settings).isEmpty()) {
                 binding.settingsPresetCurrentTv.setText(
                         getString(R.string.preset_current, getString(preset.getLabelRes())));
                 return;
@@ -472,7 +467,7 @@ public class SettingsFragment extends Fragment {
     /** Never a black box: list what will change, then apply only if the user agrees. */
     private void confirmPreset(SuggestedPreset preset) {
         String name = getString(preset.getLabelRes());
-        java.util.List<String> changes = preset.describeChanges(requireContext());
+        java.util.List<String> changes = preset.describeChanges(requireContext(), settings);
         if (changes.isEmpty()) {
             Toast.makeText(requireContext(), R.string.preset_confirm_nothing_to_do,
                     Toast.LENGTH_SHORT).show();
@@ -489,7 +484,7 @@ public class SettingsFragment extends Fragment {
                 .setMessage(message.toString().trim())
                 .setNegativeButton(android.R.string.cancel, null)
                 .setPositiveButton(android.R.string.ok, (d, w) -> {
-                    preset.apply(requireContext());
+                    preset.apply(requireContext(), settings);
                     // The screen reads its values once, at creation; after writing behind its back
                     // the controls have to be pointed at the new state or they would show - and on
                     // the next edit write back - the old one.
@@ -502,7 +497,7 @@ public class SettingsFragment extends Fragment {
 
     private void refreshFromPreferences() {
         if (binding == null) return;
-        LauncherPreferences prefs = LauncherPreferences.requireSingleton();
+        com.zomdroid.game.InstanceSettings prefs = settings;
         binding.settingsRendererS.setSelection(
                 ((ArrayAdapter<LauncherPreferences.Renderer>) binding.settingsRendererS.getAdapter())
                         .getPosition(prefs.getRenderer()));

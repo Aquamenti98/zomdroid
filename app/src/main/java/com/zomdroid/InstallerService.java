@@ -90,6 +90,9 @@ public class InstallerService extends Service implements TaskProgressListener {
     private Task currentTask;
     private String currentInstallPresetName;
     private String currentGpuVendor;
+    // Name of the instance the current CREATE_GAME_INSTANCE task is building. The post-install
+    // setup dialog applies a preset, and presets are per-instance now, so it has to know which.
+    private String currentInstanceName;
     // True between the start of a user-initiated task and its finish/error state. Guards against
     // the launch-time dependency re-check taking the service over mid-install; see onStartCommand.
     private volatile boolean userTaskRunning;
@@ -137,6 +140,9 @@ public class InstallerService extends Service implements TaskProgressListener {
         }
         if (intent.hasExtra(EXTRA_GPU_VENDOR)) {
             currentGpuVendor = intent.getStringExtra(EXTRA_GPU_VENDOR);
+        }
+        if (intent.hasExtra(EXTRA_GAME_INSTANCE_NAME)) {
+            currentInstanceName = intent.getStringExtra(EXTRA_GAME_INSTANCE_NAME);
         }
 
         Intent serviceStartedBroadcast = new Intent(ACTION_STARTED);
@@ -341,6 +347,10 @@ public class InstallerService extends Service implements TaskProgressListener {
             }
 
             GameInstanceManager.requireSingleton().unregisterInstance(gameInstance);
+            // Drop this instance's stored launch settings too. They are keyed by name, and names
+            // are reusable, so leaving them behind would silently hand a dead instance's renderer
+            // and JVM arguments to whatever is created next under the same name.
+            com.zomdroid.game.InstanceSettings.forget(gameInstanceName);
             finish(getString(R.string.dialog_title_instance_deleted), null);
         });
     }
@@ -945,8 +955,12 @@ public class InstallerService extends Service implements TaskProgressListener {
 
         try (ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(os, 256 * 1024))) {
             // report.txt — device / build metadata
-            LauncherPreferences prefs = LauncherPreferences.requireSingleton();
-            LauncherPreferences.VulkanDriver driver = prefs.getVulkanDriver();
+            // The report must describe the instance it is about, not the app-wide defaults.
+            // gi is null when no instance is installed yet; a null name reads the global values,
+            // which is exactly what the report used to print in that case.
+            com.zomdroid.game.InstanceSettings settings =
+                    new com.zomdroid.game.InstanceSettings(gi != null ? gi.getName() : null);
+            LauncherPreferences.VulkanDriver driver = settings.getVulkanDriver();
             String driverStr = driver.libName != null
                     ? driver.name() + " (" + driver.libName + ")"
                     : "system default";
@@ -969,7 +983,7 @@ public class InstallerService extends Service implements TaskProgressListener {
                     : "Instance : " + gi.getName()
                         + " (" + gi.getPresetName() + ", build " + gi.getBuildVersion()
                         + ", 4220plus=" + gi.isBuild4220Plus() + ")\n");
-            writeLogUtf8(zos, "Renderer : " + prefs.getRenderer().name() + "\n");
+            writeLogUtf8(zos, "Renderer : " + settings.getRenderer().name() + "\n");
             writeLogUtf8(zos, "Driver   : " + driverStr + "\n");
             // The two questions every NG_GL4ES "it just closes" report starts with: how much RAM
             // does the device have, and did the player ever apply the Build 42 JVM preset. Both
@@ -977,15 +991,15 @@ public class InstallerService extends Service implements TaskProgressListener {
             writeLogUtf8(zos, "RAM      : " + readRamSummary() + "\n");
             // The rest of the memory treatment, in the same place as the RAM figure: the texture
             // budget toggle and the resolution the renderer actually draws at.
-            writeLogUtf8(zos, "Memory   : saver " + (prefs.isMemorySaver() ? "ON" : "off")
-                    + ", render scale " + String.format(Locale.US, "%.2f", prefs.getRenderScale()) + "\n");
-            String jvmArgs = LauncherPreferences.squashWhitespace(prefs.getJvmArgs());
+            writeLogUtf8(zos, "Memory   : saver " + (settings.isMemorySaver() ? "ON" : "off")
+                    + ", render scale " + String.format(Locale.US, "%.2f", settings.getRenderScale()) + "\n");
+            String jvmArgs = LauncherPreferences.squashWhitespace(settings.getJvmArgs());
             writeLogUtf8(zos, "JVM args : " + (jvmArgs.isEmpty() ? "(none)" : jvmArgs)
                     + "  [" + LauncherPreferences.describeJvmArgsPreset(jvmArgs) + "]\n");
             // Env vars matter as much as the JVM args: knobs like LIBGL_SHRINK, LIBGL_TEXBUDGET and
             // ZINK_DEBUG travel around chats as folklore, and without this line a report gives no
             // way to tell an actual finding from something the player pasted in on someone's advice.
-            String envVars = LauncherPreferences.squashWhitespace(prefs.getEnvVars());
+            String envVars = LauncherPreferences.squashWhitespace(settings.getEnvVars());
             writeLogUtf8(zos, "Env vars : " + (envVars.isEmpty() ? "(none)" : envVars) + "\n");
             // Since 1.4.8 each build loads the game's OWN jassimp/Lighting/PZBullet from
             // android/arm64-v8a instead of ours, so the health of that folder now decides whether
@@ -2705,6 +2719,10 @@ public class InstallerService extends Service implements TaskProgressListener {
 
     public String getCurrentInstallPresetName() {
         return currentInstallPresetName;
+    }
+
+    public String getCurrentInstanceName() {
+        return currentInstanceName;
     }
 
     public String getCurrentGpuVendor() {

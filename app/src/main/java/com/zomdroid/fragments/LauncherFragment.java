@@ -95,6 +95,7 @@ public class LauncherFragment extends Fragment {
                 InstallerService.Task finishedTask = installerService.getCurrentTask();
                 String presetName = installerService.getCurrentInstallPresetName();
                 String gpuVendor = installerService.getCurrentGpuVendor();
+                String newInstanceName = installerService.getCurrentInstanceName();
                 adapter.notifyDataSetChanged();
                 taskProgressDialog.dismiss();
                 unbindInstallerService();
@@ -102,7 +103,7 @@ public class LauncherFragment extends Fragment {
                 if (finishedTask == InstallerService.Task.CREATE_GAME_INSTANCE
                         && !postInstallDialogShown) {
                     postInstallDialogShown = true;
-                    showPostInstallSetupDialog(presetName, gpuVendor);
+                    showPostInstallSetupDialog(presetName, gpuVendor, newInstanceName);
                 }
             } else if (state.isFinishedWithError) {
                 adapter.notifyDataSetChanged();
@@ -153,6 +154,7 @@ public class LauncherFragment extends Fragment {
                 TextView nameTv = itemView.findViewById(R.id.game_instance_item_name_tv);
                 ImageButton launchIb = itemView.findViewById(R.id.game_instance_item_launch_ib);
                 ImageButton settingsIb = itemView.findViewById(R.id.game_instance_item_settings_ib);
+                ImageButton moreIb = itemView.findViewById(R.id.game_instance_item_more_ib);
 
                 nameTv.setText(gameInstance.getName());
 
@@ -238,7 +240,16 @@ public class LauncherFragment extends Fragment {
                     launchGame(gameInstance);
                 });
 
+                // The gear opens this instance's launch settings; storage, backup and delete
+                // live under the overflow next to it.
                 settingsIb.setOnClickListener(v -> {
+                    Bundle args = new Bundle();
+                    args.putString(SettingsFragment.ARG_INSTANCE, gameInstance.getName());
+                    Navigation.findNavController(v)
+                            .navigate(R.id.action_open_instance_settings, args);
+                });
+
+                moreIb.setOnClickListener(v -> {
                     PopupMenu popupMenu = new PopupMenu(requireContext(), v);
                     popupMenu.getMenuInflater().inflate(R.menu.menu_game_instance, popupMenu.getMenu());
 
@@ -522,7 +533,8 @@ public class LauncherFragment extends Fragment {
         }, "zomdroid-backup-restore").start();
     }
 
-    private void showPostInstallSetupDialog(String presetName, String gpuVendor) {
+    private void showPostInstallSetupDialog(String presetName, String gpuVendor,
+                                            String instanceName) {
         if (presetName == null) return;
 
         // A dialog used to stand here asking non-Qualcomm users to pick between NG_GL4ES and ZINK,
@@ -554,8 +566,10 @@ public class LauncherFragment extends Fragment {
         // someone to go and set them. Renderer, texture shrinking, Java arguments, resolution and
         // the memory saver only work as a set - handing out one of them and naming the rest is how
         // "switch to NG_GL4ES" ended up being advice that changed nothing.
+        // The preset lands on the instance that was just created, not on an app-wide default:
+        // a Build 41 instance next to a Build 42 one must not be dragged along by this.
         SuggestedPreset preset = SuggestedPreset.forInstall(presetName, gpuVendor);
-        preset.apply(requireContext());
+        preset.apply(requireContext(), new com.zomdroid.game.InstanceSettings(instanceName));
 
         // Three short paragraphs, in this order: which build this is, what was set for this GPU,
         // and what to do if it still misbehaves. The wall of text this replaces was accurate and
@@ -590,8 +604,12 @@ public class LauncherFragment extends Fragment {
                 .setPositiveButton(R.string.dialog_button_ok, null)
                 // Where these settings live, for the Adreno owner the hint above sends here and for
                 // anyone who wants to look. One canonical place; every other screen points at it.
-                .setNeutralButton(R.string.preset_card_title, (dialog, which) ->
-                        Navigation.findNavController(requireView()).navigate(R.id.settings_fragment))
+                .setNeutralButton(R.string.preset_card_title, (dialog, which) -> {
+                    Bundle presetArgs = new Bundle();
+                    presetArgs.putString(SettingsFragment.ARG_INSTANCE, instanceName);
+                    Navigation.findNavController(requireView())
+                            .navigate(R.id.action_open_instance_settings, presetArgs);
+                })
                 .show();
     }
 

@@ -66,6 +66,10 @@ public class GameActivity extends AppCompatActivity implements GamepadManager.Ga
     // Helps to calculate mouse cursor position
     private float renderScale = 1f;
 
+    // Launch settings of the instance being played. Resolved from the intent extra in onCreate();
+    // with a null name it reads the global values, which is the same thing it did before.
+    private com.zomdroid.game.InstanceSettings instanceSettings;
+
     @SuppressLint({"UnsafeDynamicallyLoadedCode", "ClickableViewAccessibility"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,13 +92,18 @@ public class GameActivity extends AppCompatActivity implements GamepadManager.Ga
         if (gameInstanceName != null) {
             binding.inputControlsV.setInstanceName(gameInstanceName);
         }
+        // Render scale and the two on-screen-control toggles belong to the instance being played.
+        // The control elements never read preferences themselves — they ask the view — so handing
+        // the view these two values here is the whole of it.
+        instanceSettings = new com.zomdroid.game.InstanceSettings(gameInstanceName);
+        binding.inputControlsV.setVibrateOnTouch(instanceSettings.isVibrateOnTouch());
 
         binding.gameSv.setFocusable(true);
         binding.gameSv.setFocusableInTouchMode(true);
         binding.gameSv.requestFocus();
 
         // Initializing the cursor calsulation pos helper
-        renderScale = LauncherPreferences.requireSingleton().getRenderScale();
+        renderScale = instanceSettings.getRenderScale();
 
         // Initialize and register GamepadManager for gamepad hotplug and input events
         try {
@@ -102,7 +111,7 @@ public class GameActivity extends AppCompatActivity implements GamepadManager.Ga
             //gamepadManager.register();
 
             // Apply touch override based on saved preference
-            boolean isTouchEnabled = LauncherPreferences.requireSingleton().isTouchControlsEnabled();
+            boolean isTouchEnabled = instanceSettings.isTouchControlsEnabled();
             GamepadManager.setTouchOverride(isTouchEnabled);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Failed to initialize GamepadManager", e);
@@ -114,7 +123,7 @@ public class GameActivity extends AppCompatActivity implements GamepadManager.Ga
             //keyboardManager.register();
 
           // Apply touch override based on saved preference
-          boolean isTouchEnabled = LauncherPreferences.requireSingleton().isTouchControlsEnabled();
+          boolean isTouchEnabled = instanceSettings.isTouchControlsEnabled();
           KeyboardManager.setTouchOverride(isTouchEnabled);
         } catch (Exception e) {
             Toast.makeText(this, "Failed to initialize keyboardManager", Toast.LENGTH_SHORT).show();
@@ -166,7 +175,7 @@ public class GameActivity extends AppCompatActivity implements GamepadManager.Ga
             @Override
             public void surfaceCreated(@NonNull SurfaceHolder holder) {
                 Log.d(LOG_TAG, "Game surface created.");
-                renderScale = LauncherPreferences.requireSingleton().getRenderScale();
+                renderScale = instanceSettings.getRenderScale();
                 int width = (int) (binding.gameSv.getWidth() * renderScale);
                 int height = (int) (binding.gameSv.getHeight() * renderScale);
                 binding.gameSv.getHolder().setFixedSize(width, height);
@@ -207,7 +216,7 @@ public class GameActivity extends AppCompatActivity implements GamepadManager.Ga
         });
 
       binding.gameSv.setOnTouchListener(new View.OnTouchListener() {
-        //float renderScale = LauncherPreferences.requireSingleton().getRenderScale();
+        //float renderScale = instanceSettings.getRenderScale();
         int activePointerId = -1;
         boolean leftPressedFinger = false;
 
@@ -362,7 +371,7 @@ public class GameActivity extends AppCompatActivity implements GamepadManager.Ga
     // Handle gamepad/keyboard motion events
     @Override
     public boolean onGenericMotionEvent(MotionEvent event) {
-      //float renderScale = LauncherPreferences.requireSingleton().getRenderScale();
+      //float renderScale = instanceSettings.getRenderScale();
 
       boolean isPointerDevice = event.isFromSource(InputDevice.SOURCE_MOUSE) || event.isFromSource(InputDevice.SOURCE_TOUCHPAD) || event.getToolType(0) == MotionEvent.TOOL_TYPE_MOUSE;
 

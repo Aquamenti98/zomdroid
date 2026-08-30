@@ -79,6 +79,18 @@ public class OptimizationFragment extends Fragment {
         }
     };
 
+    /**
+     * The instance picked in the ZBBetterFPS spinner, or null when the list is still empty or the
+     * "choose an instance" placeholder is showing. The placeholder occupies position 0 whenever
+     * there is more than one instance, which is where the offset comes from.
+     */
+    private GameInstance selectedInstanceOrNull() {
+        if (instances == null || instances.isEmpty() || binding == null) return null;
+        int position = binding.optimizationZbbetterfpsInstanceSpinner.getSelectedItemPosition();
+        int idx = instances.size() > 1 ? position - 1 : position;
+        return (idx >= 0 && idx < instances.size()) ? instances.get(idx) : null;
+    }
+
     private void handleTaskState(InstallerService.TaskState state) {
         if (state == null) return;
         if (state.isFinished) {
@@ -192,8 +204,16 @@ public class OptimizationFragment extends Fragment {
         binding.optimizationJvmRecommendedTv.setText(LauncherPreferences.DEFAULT_JVM_ARGS);
 
         // Open Settings link
-        binding.optimizationOpenSettingsTv.setOnClickListener(v ->
-                Navigation.findNavController(v).navigate(R.id.settings_fragment));
+        // Settings are per-instance now, so hand over the instance this screen is pointed at.
+        // With none selected the screen opens on the app-wide fallbacks, as it always did.
+        binding.optimizationOpenSettingsTv.setOnClickListener(v -> {
+            android.os.Bundle args = new android.os.Bundle();
+            GameInstance selected = selectedInstanceOrNull();
+            if (selected != null) {
+                args.putString(SettingsFragment.ARG_INSTANCE, selected.getName());
+            }
+            Navigation.findNavController(v).navigate(R.id.settings_fragment, args);
+        });
 
         // BetterFPS help
         binding.optimizationBetterfpsHelpIb.setOnClickListener(v ->
@@ -474,9 +494,15 @@ public class OptimizationFragment extends Fragment {
                     public void onItemSelected(android.widget.AdapterView<?> parent,
                                                android.view.View view, int position, long id) {
                         int idx = (instances != null && instances.size() > 1) ? position - 1 : position;
-                        // Warn if GL4ES renderer is selected — ZBBetterFPS only works with ZINK
-                        boolean isGl4es = com.zomdroid.LauncherPreferences.requireSingleton().getRenderer()
-                                == com.zomdroid.LauncherPreferences.Renderer.GL4ES;
+                        // Warn if GL4ES is selected — ZBBetterFPS only works with ZINK. The
+                        // renderer belongs to the instance picked in this very spinner, so ask
+                        // that instance: the warning used to read the app-wide default and could
+                        // contradict the instance the user was actually configuring.
+                        boolean isGl4es = false;
+                        if (instances != null && idx >= 0 && idx < instances.size()) {
+                            isGl4es = instances.get(idx).settings().getRenderer()
+                                    == com.zomdroid.LauncherPreferences.Renderer.GL4ES;
+                        }
                         binding.optimizationZbbetterfpsGl4esWarningTv.setVisibility(
                                 isGl4es ? android.view.View.VISIBLE : android.view.View.GONE);
                     }

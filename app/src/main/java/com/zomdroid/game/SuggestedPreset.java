@@ -161,17 +161,15 @@ public enum SuggestedPreset {
         return forBuild42(gpuVendor) == BUILD_42_QUALITY;
     }
 
-    /** Write this combination into the launcher preferences. */
-    public void apply(Context context) {
-        LauncherPreferences prefs = LauncherPreferences.requireSingleton();
+    /** Write this combination into one instance's settings. */
+    public void apply(Context context, InstanceSettings prefs) {
         prefs.setRenderer(renderer);
         prefs.setEnvVars(withShrink(prefs.getEnvVars(), shrink));
         prefs.setJvmArgs(jvmArgs);
         prefs.setRenderScale(RENDER_SCALE);
         prefs.setMemorySaver(resolveMemorySaver(context));
-        LauncherPreferences.VulkanDriver driver = resolveDriver();
+        LauncherPreferences.VulkanDriver driver = resolveDriver(prefs);
         if (driver != null) prefs.setVulkanDriver(driver);
-        prefs.saveToPreferences();
     }
 
     /**
@@ -182,13 +180,12 @@ public enum SuggestedPreset {
      * driver black-screens on plenty of phones, and we papered over that by asking people to go and
      * pick Freedreno by hand. The GPU says which one - see {@link GpuInfo}.
      */
-    private LauncherPreferences.VulkanDriver resolveDriver() {
+    private LauncherPreferences.VulkanDriver resolveDriver(InstanceSettings prefs) {
         if (renderer != LauncherPreferences.Renderer.ZINK_ZFA
                 && renderer != LauncherPreferences.Renderer.ZINK_OSMESA) return null;
         // Never overwrite a driver someone imported themselves - that is a deliberate act, usually
         // after a bad experience with everything we ship.
-        if (LauncherPreferences.requireSingleton().getVulkanDriver()
-                == LauncherPreferences.VulkanDriver.CUSTOM_DRIVER) return null;
+        if (prefs.getVulkanDriver() == LauncherPreferences.VulkanDriver.CUSTOM_DRIVER) return null;
         return GpuInfo.query().recommendedDriver();
     }
 
@@ -197,8 +194,7 @@ public enum SuggestedPreset {
      * when the current settings already match - the caller can then say so instead of showing an
      * empty confirmation.
      */
-    public List<String> describeChanges(Context context) {
-        LauncherPreferences prefs = LauncherPreferences.requireSingleton();
+    public List<String> describeChanges(Context context, InstanceSettings prefs) {
         List<String> changes = new ArrayList<>();
 
         if (prefs.getRenderer() != renderer)
@@ -217,7 +213,7 @@ public enum SuggestedPreset {
             changes.add(context.getString(R.string.preset_change_render_scale,
                     percent(prefs.getRenderScale()), percent(RENDER_SCALE)));
 
-        LauncherPreferences.VulkanDriver driver = resolveDriver();
+        LauncherPreferences.VulkanDriver driver = resolveDriver(prefs);
         if (driver != null && prefs.getVulkanDriver() != driver)
             changes.add(context.getString(R.string.preset_change_vulkan_driver,
                     prefs.getVulkanDriver().name(), driver.name()));

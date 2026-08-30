@@ -68,6 +68,15 @@ public class GameInstance {
         return this.name;
     }
 
+    /**
+     * This instance's own launch settings (renderer, driver, JVM args, scale, toggles). Built on
+     * demand and deliberately not cached: {@link InstanceSettings} is a thin view over shared
+     * preferences, so a settings screen and the launch path always see the same stored values.
+     */
+    public InstanceSettings settings() {
+        return new InstanceSettings(this.name);
+    }
+
   public String getBuildVersion() { return this.buildVersion; }
 
 

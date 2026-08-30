@@ -47,8 +47,7 @@ public class ButtonControlElement extends AbstractControlElement {
 
     // Light haptic tick on press, only when the user enabled it (default off).
     private void maybeHaptic() {
-        com.zomdroid.LauncherPreferences p = com.zomdroid.LauncherPreferences.getSingleton();
-        if (p != null && p.isVibrateOnTouch()) {
+        if (this.parentView.isVibrateOnTouch()) {
             this.parentView.performHapticFeedback(
                     android.view.HapticFeedbackConstants.VIRTUAL_KEY,
                     android.view.HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);

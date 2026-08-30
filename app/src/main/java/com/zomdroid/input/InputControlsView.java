@@ -45,6 +45,8 @@ public class InputControlsView extends View {
     private Gson gson = new Gson();
     private SharedPreferences sharedPreferences;
     private String instanceName = null;
+    // Per-instance haptic flag, pushed in by GameActivity; see setVibrateOnTouch().
+    private boolean vibrateOnTouch = false;
     private Boolean isGamepadConnected = null;
     private InputMode currentInputMode = InputMode.ALL;
     private final Context context;
@@ -560,6 +562,19 @@ public class InputControlsView extends View {
     public void setRenderScale(float rs) {
         if (rs <= 0f) rs = 1f;
         this.renderScale = rs;
+    }
+
+    /**
+     * Haptic feedback is a per-instance setting, and the control elements have no instance of
+     * their own — they ask this view, the same way they already ask it for the render scale.
+     * GameActivity sets it once from the instance being played.
+     */
+    public void setVibrateOnTouch(boolean enabled) {
+        this.vibrateOnTouch = enabled;
+    }
+
+    public boolean isVibrateOnTouch() {
+        return vibrateOnTouch;
     }
 
     public float getRenderScale() {

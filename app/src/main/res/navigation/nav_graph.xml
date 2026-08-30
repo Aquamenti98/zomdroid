@@ -15,6 +15,9 @@
             app:destination="@id/new_game_instance_fragment" />
         <action
             android:id="@id/action_open_settings_fragment"
+            app:destination="@id/app_settings_fragment"/>
+        <action
+            android:id="@+id/action_open_instance_settings"
             app:destination="@id/settings_fragment"/>
         <action
             android:id="@id/action_open_gamepad_mapper"
@@ -61,11 +64,27 @@
         tools:layout="@layout/fragment_new_game_instance">
     </fragment>
 
+    <!-- Per-instance launch settings, opened by the gear on an instance card. The argument is
+         nullable so the screen still works if something navigates here without one; it then reads
+         and writes the app-wide fallbacks. -->
     <fragment
         android:id="@+id/settings_fragment"
         android:name="com.zomdroid.fragments.SettingsFragment"
-        android:label="@string/fragment_label_settings"
+        android:label="@string/fragment_label_instance_settings"
         tools:layout="@layout/fragment_settings">
+        <argument
+            android:name="instance"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+    </fragment>
+
+    <!-- App-wide settings: the theme, and nothing else. -->
+    <fragment
+        android:id="@+id/app_settings_fragment"
+        android:name="com.zomdroid.fragments.AppSettingsFragment"
+        android:label="@string/fragment_label_settings"
+        tools:layout="@layout/fragment_app_settings">
     </fragment>
 
     <fragment

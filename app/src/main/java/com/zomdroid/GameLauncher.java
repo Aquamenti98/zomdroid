@@ -15,6 +15,9 @@ import java.util.ArrayList;
 
 public class GameLauncher {
     public static void launch(GameInstance gameInstance) throws ErrnoException {
+        // Everything the launch path used to read from the global preferences now belongs to this
+        // instance. Read once: InstanceSettings is a view over shared prefs, not a snapshot.
+        final com.zomdroid.game.InstanceSettings settings = gameInstance.settings();
 
         // B42: make sure ShaderUnit.class carries the combineShaderSources patch (needed by
         // NG_GL4ES). Normally done at instance creation; doing it here too picks up instances
@@ -118,7 +121,7 @@ public class GameLauncher {
         Os.setenv("LIBGL_MIPMAP", "1", false);
 
         boolean verboseNativeLogs = BuildConfig.DEBUG
-                || LauncherPreferences.requireSingleton().isDebug();
+                || settings.isDebug();
         Os.setenv("BOX64_LOG", verboseNativeLogs ? "1" : "0", false);
         Os.setenv("BOX64_SHOWBT", verboseNativeLogs ? "1" : "0", false);
         Os.setenv("BOX64_LD_LIBRARY_PATH", gameInstance.getLdLibraryPathForEmulation(), false);
@@ -137,11 +140,11 @@ public class GameLauncher {
         Os.setenv("GALLIUM_DRIVER", "zink", false);
 
         Os.setenv("ZOMDROID_CACHE_DIR", AppStorage.requireSingleton().getCachePath(), false);
-        Os.setenv("ZOMDROID_RENDERER", LauncherPreferences.requireSingleton().getRenderer().name(), false);
-        switch (LauncherPreferences.requireSingleton().getRenderer()) {
+        Os.setenv("ZOMDROID_RENDERER", settings.getRenderer().name(), false);
+        switch (settings.getRenderer()) {
             case ZINK_ZFA:
             case ZINK_OSMESA:
-                String vulkanDriverName = LauncherPreferences.requireSingleton().getVulkanDriver().libName;
+                String vulkanDriverName = settings.getVulkanDriver().libName;
                 if (vulkanDriverName != null) {
                     Os.setenv("ZOMDROID_VULKAN_DRIVER_NAME", vulkanDriverName, false);
                 }
@@ -171,7 +174,7 @@ public class GameLauncher {
                 // threshold NG_GL4ES loads new large textures at half resolution — caps runaway
                 // texture memory at the cost of tile detail. Unset = 0 = the mechanism sleeps.
                 // override=false so a manual LIBGL_TEXBUDGET in the env-vars field still wins.
-                if (LauncherPreferences.requireSingleton().isMemorySaver()) {
+                if (settings.isMemorySaver()) {
                     Os.setenv("LIBGL_TEXBUDGET", "800", false);
                 }
                 boolean isQualcomm = isQualcommGpu();
@@ -205,7 +208,7 @@ public class GameLauncher {
 
         // JVM args [variables] from user settings
         ArrayList<String> jvmArgs = gameInstance.getJvmArgsAsList();
-        String rawArgs = LauncherPreferences.requireSingleton().getJvmArgs();
+        String rawArgs = settings.getJvmArgs();
 
         if (rawArgs != null && !rawArgs.trim().isEmpty()) {
             String[] splitArgs = rawArgs.trim().split("\\s+");
@@ -215,7 +218,7 @@ public class GameLauncher {
         }
 
         // Environment variables from user settings
-        String rawEnvVars = LauncherPreferences.requireSingleton().getEnvVars();
+        String rawEnvVars = settings.getEnvVars();
         if (rawEnvVars != null && !rawEnvVars.trim().isEmpty()) {
             for (String token : rawEnvVars.trim().split("\\s+")) {
                 String[] parts = token.split("=", 2);
@@ -225,8 +228,8 @@ public class GameLauncher {
             }
         }
 
-        jvmArgs.add("-Dorg.lwjgl.opengl.libname=" + LauncherPreferences.requireSingleton().getRenderer().libName);
-        jvmArgs.add("-Dzomdroid.renderer=" + LauncherPreferences.requireSingleton().getRenderer().name());
+        jvmArgs.add("-Dorg.lwjgl.opengl.libname=" + settings.getRenderer().libName);
+        jvmArgs.add("-Dzomdroid.renderer=" + settings.getRenderer().name());
         // Presence of backup.dir is what arms the F10 backup in the agent. Build 42 only: the
         // flush sequence it relies on was verified against 42.20's classes, and the mod it is read
         // from targets 42 - Build 41 keeps the plain quick save. Multiplayer is refused inside the
@@ -239,7 +242,7 @@ public class GameLauncher {
         // and an honest message than a convincing illusion. No property at all (Build 41, or an
         // older launcher) keeps the plain save: there the backup was never on offer.
         if (gameInstance.getBuildVersion() != null && gameInstance.getBuildVersion().startsWith("42")) {
-            if (LauncherPreferences.requireSingleton().isQuickSaveBackup()) {
+            if (settings.isQuickSaveBackup()) {
                 jvmArgs.add("-Dzomdroid.backup.dir=" + gameInstance.getHomePath() + "/"
                         + com.zomdroid.game.BackupManager.BACKUP_DIR_NAME);
             } else {
@@ -264,11 +267,11 @@ public class GameLauncher {
         Log.i("Zomdroid", "JVM ARGS: " + jvmArgs);
         Log.i("Zomdroid", "GAME ARGS: " + args);
 
-        if (BuildConfig.DEBUG || LauncherPreferences.requireSingleton().isDebug()) {
+        if (BuildConfig.DEBUG || settings.isDebug()) {
             args.add("-debug");
         }
 
-        if (LauncherPreferences.requireSingleton().getRenderer() == LauncherPreferences.Renderer.NG_GL4ES) {
+        if (settings.getRenderer() == LauncherPreferences.Renderer.NG_GL4ES) {
             args.add("-debuglog=Shader");
         }
 
@@ -277,7 +280,7 @@ public class GameLauncher {
 
         // Prefer JRE21 when using GL4ES-style renderers (Build 41 tends to rely on that path).
         // This isolates "old GL4ES pipeline" from "new Java 25 runtime" regressions.
-        boolean preferJre21ForRenderer = isLegacyRendererNeedingJre21(LauncherPreferences.requireSingleton().getRenderer());
+        boolean preferJre21ForRenderer = isLegacyRendererNeedingJre21(settings.getRenderer());
         // ZombieBuddy agent — loaded if jar present in game folder AND enabled in settings
         android.content.SharedPreferences zbPrefs = LauncherPreferences.requireSingleton().getSharedPrefs();
 
