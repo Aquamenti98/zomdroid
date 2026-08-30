@@ -20,23 +20,44 @@ import java.util.Locale;
  *
  * <p>Build 42.13 regressed file lookup on case-sensitive filesystems - 41.78 is fine. It is
  * reported to the Indie Stone ("[42.13] Regression in Build 42.13: Linux filename case-sensitivity
- * issue") and still open, so this is ours to carry. Two lookups genuinely go to disk with a mangled
- * name, and each gets a symlink:
+ * issue") and still open, so this is ours to carry. Two mangled lookups were identified, and each
+ * got its own mechanism. <b>Only the second is still in use.</b>
  *
  * <ol>
- *   <li>The file is requested in lowercase: "media/scripts/recipes/recipes_ladders.txt" while the
- *       mod ships "recipes_Ladders.txt". Answered by giving every capitalised entry a lowercase
- *       alias beside it. The multiplayer client check compares the same relative path, so the
- *       aliases have to live in the real mod folder - a copy off to the side is why joining a
- *       server still failed.</li>
- *   <li>The mod's whole absolute path is lowercased and appended to the mods root, yielding
- *       "&lt;mods&gt;/data/user/0/.../zomboid/mods/&lt;mod&gt;/...". No amount of aliasing inside
- *       the mod creates that prefix, so the prefix is materialised and its last component points
- *       back at the real mod.</li>
+ *   <li><b>Form 1, WITHDRAWN - do not bring it back without reading the next section.</b> The file
+ *       is requested in lowercase: "media/scripts/recipes/recipes_ladders.txt" while the mod ships
+ *       "recipes_Ladders.txt". This was answered by giving every capitalised entry a lowercase
+ *       alias beside it. See {@link #PER_ENTRY_ALIASES_ENABLED}: it is off, and the aliases are
+ *       swept from every mod at launch.</li>
+ *   <li><b>Form 2, live.</b> The mod's whole absolute path is lowercased and appended to the mods
+ *       root, yielding "&lt;mods&gt;/data/user/0/.../zomboid/mods/&lt;mod&gt;/...". No amount of
+ *       aliasing inside the mod creates that prefix, so the prefix is materialised and its last
+ *       component points back at the real mod. It fixes a really observed FileNotFoundException
+ *       and multiplies nothing - one extra route per mod, not per file.</li>
  * </ol>
  *
- * <p>Measured on the Ladders mod: 206 aliases plus one mod link added 0 KB, where the lowercase
- * copy this replaces cost 1.2 MB - exactly the size of the mod.
+ * <h3>Why form 1 was withdrawn, and why the multiplayer argument for it does not stand</h3>
+ *
+ * <p>Aliasing every mixed-case entry <i>including directories</i> makes a file reachable by 2^k
+ * paths. It was the cause of the "mods broke on 1.4.8" wave: proven on device, then confirmed by
+ * four players across animation, clothing and translation mods. The arithmetic and the evidence
+ * are on {@link #PER_ENTRY_ALIASES_ENABLED}.
+ *
+ * <p>This text used to assert, as fact, that "the multiplayer client check compares the same
+ * relative path, so the aliases have to live in the real mod folder - a copy off to the side is why
+ * joining a server still failed". <b>That claim is retracted; the dates do not support it.</b> The
+ * per-entry symlinks landed in a3edeed (2026-08-02) and the launch-time repair in b39a80a (08-12),
+ * while the actual cause of the join failures - the /data/data vs /data/user/0 key mismatch in
+ * ActiveFileMap - was only fixed by aec9d84 (08-13). Every "it still failed" observation predates
+ * the real fix, so none of them is evidence for form 1. PZ lowercases the relative paths it sends
+ * to the server itself; nothing requires a second physical spelling on disk.
+ *
+ * <p><b>If a genuinely mixed-case mod ever surfaces, fix it in the agent, not on disk:</b> exact
+ * lookup first, and only on a miss, and only inside the mod folder, resolve each path component
+ * case-insensitively; return the true physical path while the lowercase key stays the map and
+ * network key; log an ambiguous "Foo"/"foo" rather than guessing. Any filesystem scheme - including
+ * a single fully-lowercase mirror - has a floor of two routes per file, and the only figure ever
+ * measured as safe is zero duplicates.
  *
  * <h3>Why it also runs at launch</h3>
  *
@@ -84,10 +105,16 @@ public final class LowercasePathAliases {
      * exactly the animation-transition content whose `pickup -> BwdDrag -> BwdDragHead` promote is
      * the one thing observed broken on 1.4.8, on every importer we tried.
      *
-     * <p>This is a diagnostic switch, not the fix. If it proves the cause, the real answer is to
-     * stop creating per-level twins and build ONE fully-lowercase mirror instead: two routes per
-     * file rather than 2^k, with the workaround - and the multiplayer path check that needs the
-     * aliases to live inside the mod folder - preserved.
+     * <p><b>It did prove the cause, and the switch is now the shipped state, not a diagnostic.</b>
+     * On her device the ZomboRut scene played again - "bridge done" at t=32 and 8.5 s of animation
+     * against 0.05 s - and overrides fell from 14 442 to 147. Four players then confirmed it across
+     * three classes of mod: animation, clothing and translation. It also holds regardless of which
+     * jassimp is loaded, since that run used the game's own x86_64 importer through box64.
+     *
+     * <p><b>Do not replace this with a lowercase mirror.</b> Any filesystem scheme needs both
+     * spellings to exist, so its floor is two routes per file; the only value measured as safe is
+     * zero. And the multiplayer justification that used to be given for keeping aliases inside the
+     * mod folder is retracted - see the class javadoc for the dates that refute it.
      */
     public static final boolean PER_ENTRY_ALIASES_ENABLED = false;
 
