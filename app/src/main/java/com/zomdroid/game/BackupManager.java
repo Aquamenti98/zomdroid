@@ -38,6 +38,11 @@ public final class BackupManager {
     private static final String LOG_TAG = BackupManager.class.getName();
 
     public static final String BACKUP_DIR_NAME = "zomdroid_backups";
+
+    // Everything here stays inside one instance - <instance>/zomdroid_backups for the copies,
+    // Zomboid/Saves for the source. Keep it that way: the app's home also holds NG_GL4ES's ETC2
+    // texture cache (C.NGG_ETC2_CACHE_DIR), hundreds of megabytes that must never be backed up.
+
     private static final String MARKER = "session.running";
     private static final String RESTORE_NEW_SUFFIX = ".__restore_new";
     private static final String RESTORE_OLD_SUFFIX = ".__restore_old";

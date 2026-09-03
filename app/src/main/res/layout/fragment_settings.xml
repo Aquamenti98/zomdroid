@@ -184,6 +184,69 @@
 
                 </LinearLayout>
 
+                <!-- NG_GL4ES and both ZINKs: the renderers with an ETC2 path. Switch first, then
+                     the cache it fills. The label carries the size, which also makes "shared"
+                     self-evident - the number is identical in every instance. -->
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/settings_texture_compression_switch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:text="@string/settings_texture_compression"/>
+
+                <TextView
+                    android:id="@+id/settings_texture_compression_hint_tv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:text="@string/settings_texture_compression_hint"/>
+
+                <LinearLayout
+                    android:id="@+id/settings_etc2_cache_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <TextView
+                        android:id="@+id/settings_etc2_cache_label_tv"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        tools:text="Texture cache: 879 MB"/>
+
+                    <!-- Tonal, like every other secondary button on this screen; the filled
+                         primary colour is reserved for the preset buttons at the top. -->
+                    <Button
+                        android:id="@+id/settings_etc2_cache_clear_btn"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="@string/settings_etc2_cache_clear"/>
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/settings_etc2_cache_hint_tv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:text="@string/settings_etc2_cache_hint"/>
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

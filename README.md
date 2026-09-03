@@ -40,7 +40,7 @@ Prebuilt binaries and JARs are located in the `app/src/main/assets/bundles` fold
 **except** for **Box64** and **GLFW**, which are built alongside the Zomdroid APK.
 
 All Zomdroid dependencies—**except Box64 and GLFW**—can be either:
-- Built from the [zomdroid-dependencies](https://github.com/liamelui/zomdroid-dependencies) repository  
+- Built from the [zomdroid-dependencies](https://github.com/udarmolota/zomdroid-dependencies) repository  
   (Mesa, LWJGL, Assimp, JNIWrapper, GL4ES, zomdroid-agent), or
 - Downloaded from official sources (FMOD, standard GNU/Linux libraries, JRE from PojavLauncherTeam, SQLite JDBC)
   

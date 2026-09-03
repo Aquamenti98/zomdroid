@@ -3,6 +3,18 @@ package com.zomdroid;
 public class C {
     public static final String STORAGE_PROVIDER_AUTHORITY = "com.zomdroid.STORAGE_PROVIDER_AUTHORITY";
 
+    /**
+     * On-disk cache of ETC2-compressed textures, one file per texture, named by content hash.
+     * Written by NG_GL4ES and by our Mesa build for ZINK (same encoder, same hash, same store).
+     * Shared by every instance on purpose - the addressing is by content, so two instances
+     * using the same texture share one entry. Safe to delete whole or in part at any time: the
+     * renderer re-encodes what it misses. Its size ceiling and eviction are the library's business
+     * (LRU, LIBGL_ETC2CACHE_MB), not the launcher's.
+     *
+     * <p>Relative to {@link AppStorage#getHomePath()}.
+     */
+    public static final String NGG_ETC2_CACHE_DIR = "ngg_etc2cache";
+
     public static class deps {
         public static final String ROOT = "dependencies";
         // We keep multiple JRE/LIBS versions side-by-side to support different game builds.

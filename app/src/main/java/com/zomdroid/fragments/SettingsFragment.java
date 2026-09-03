@@ -1,6 +1,7 @@
 package com.zomdroid.fragments;
 
 import android.os.Bundle;
+import java.io.File;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -52,6 +53,7 @@ public class SettingsFragment extends Fragment {
         settings = new com.zomdroid.game.InstanceSettings(instanceName);
 
         setUpPresetCard();
+        setUpEtc2CacheRow();
 
         // Renderer
         ArrayAdapter<LauncherPreferences.Renderer> rendererArrayAdapter = new ArrayAdapter<>(
@@ -66,6 +68,9 @@ public class SettingsFragment extends Fragment {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 LauncherPreferences.Renderer renderer = (LauncherPreferences.Renderer) parent.getSelectedItem();
                 settings.setRenderer(renderer);
+                // Only the renderers that write the ETC2 cache (NG_GL4ES, both ZINKs) show the
+                // cache row, so it follows the choice rather than raising questions elsewhere.
+                updateEtc2CacheRow(renderer);
                 // The spinner fires this once while being restored, before the user touches
                 // anything. Warn only on a real choice, or opening Settings would greet everyone
                 // with a dialog about a renderer they already use.
@@ -451,6 +456,101 @@ public class SettingsFragment extends Fragment {
         updatePresetStatus();
     }
 
+    // ---- NG_GL4ES compressed-texture cache ---------------------------------------------------
+
+    /**
+     * Clears NG_GL4ES's on-disk ETC2 cache. Shared by every instance (the entries are addressed by
+     * content hash), which is why the label carries the size: the same number in every instance is
+     * the plainest way to say "shared".
+     *
+     * <p>Sizing and deleting both walk thousands of files - Inna's device holds ~6 000 - so both
+     * run off the main thread. Clearing is safe by construction: the renderer re-encodes whatever
+     * it misses, at a cost of seconds on the next load, and nothing here touches saves.
+     */
+    private void setUpEtc2CacheRow() {
+        binding.settingsTextureCompressionSwitch.setChecked(settings.isTextureCompression());
+        binding.settingsTextureCompressionSwitch.setOnCheckedChangeListener((v, isChecked) ->
+                settings.setTextureCompression(isChecked));
+        binding.settingsEtc2CacheClearBtn.setOnClickListener(v -> {
+            binding.settingsEtc2CacheClearBtn.setEnabled(false);
+            new Thread(() -> {
+                // The directory itself stays: the library expects to find it, and recreating it is
+                // one more thing that can fail on a device with odd permissions.
+                File cacheDir = etc2CacheDir();
+                File[] entries = cacheDir.listFiles();
+                if (entries != null) {
+                    for (File entry : entries) {
+                        if (entry.isDirectory()) com.zomdroid.FileUtils.deleteDirectory(entry);
+                        else //noinspection ResultOfMethodCallIgnored
+                            entry.delete();
+                    }
+                }
+                if (!isAdded()) return;
+                requireActivity().runOnUiThread(() -> {
+                    if (binding == null) return;
+                    binding.settingsEtc2CacheClearBtn.setEnabled(true);
+                    Toast.makeText(requireContext(), R.string.settings_etc2_cache_cleared,
+                            Toast.LENGTH_SHORT).show();
+                    updateEtc2CacheRow(settings.getRenderer());
+                });
+            }, "etc2-cache-clear").start();
+        });
+        updateEtc2CacheRow(settings.getRenderer());
+    }
+
+    /** Shows the row for the renderers that write the cache, and refreshes its size off the main thread. */
+    private void updateEtc2CacheRow(LauncherPreferences.Renderer renderer) {
+        if (binding == null) return;
+        // NG_GL4ES and both ZINK variants write this cache (same encoder, same store); plain
+        // GL4ES has no ETC2 path, so the row would only raise questions there.
+        boolean visible = renderer == LauncherPreferences.Renderer.NG_GL4ES
+                || renderer == LauncherPreferences.Renderer.ZINK_ZFA
+                || renderer == LauncherPreferences.Renderer.ZINK_OSMESA;
+        int visibility = visible ? View.VISIBLE : View.GONE;
+        binding.settingsTextureCompressionSwitch.setVisibility(visibility);
+        binding.settingsTextureCompressionHintTv.setVisibility(visibility);
+        binding.settingsEtc2CacheRow.setVisibility(visibility);
+        binding.settingsEtc2CacheHintTv.setVisibility(visibility);
+        if (!visible) return;
+
+        // Sizing walks thousands of files, so the label starts empty and fills in when the walk
+        // finishes rather than holding up the screen.
+        binding.settingsEtc2CacheLabelTv.setText(null);
+        new Thread(() -> {
+            long bytes = directorySize(etc2CacheDir());
+            if (!isAdded()) return;
+            requireActivity().runOnUiThread(() -> {
+                if (binding == null) return;
+                binding.settingsEtc2CacheLabelTv.setText(getString(
+                        R.string.settings_etc2_cache_label, formatSize(bytes)));
+            });
+        }, "etc2-cache-size").start();
+    }
+
+    private static File etc2CacheDir() {
+        return new File(com.zomdroid.AppStorage.requireSingleton().getHomePath(),
+                com.zomdroid.C.NGG_ETC2_CACHE_DIR);
+    }
+
+    private static long directorySize(File dir) {
+        File[] entries = dir.listFiles();
+        if (entries == null) return 0;
+        long total = 0;
+        for (File entry : entries) {
+            total += entry.isDirectory() ? directorySize(entry) : entry.length();
+        }
+        return total;
+    }
+
+    private static String formatSize(long bytes) {
+        if (bytes >= 1024L * 1024 * 1024)
+            return String.format(java.util.Locale.US, "%.1f GB", bytes / (1024f * 1024 * 1024));
+        if (bytes >= 1024L * 1024)
+            return String.format(java.util.Locale.US, "%d MB", bytes / (1024 * 1024));
+        if (bytes >= 1024) return String.format(java.util.Locale.US, "%d KB", bytes / 1024);
+        return bytes + " B";
+    }
+
     /** Name the preset the current settings match, so a drifted setup is visible without digging. */
     private void updatePresetStatus() {
         if (binding == null) return;
@@ -504,6 +604,7 @@ public class SettingsFragment extends Fragment {
         binding.settingsJargsEt.setText(prefs.getJvmArgs());
         binding.settingsEnvVarsEt.setText(prefs.getEnvVars());
         binding.settingsMemorySaverSwitch.setChecked(prefs.isMemorySaver());
+        binding.settingsTextureCompressionSwitch.setChecked(prefs.isTextureCompression());
         binding.settingsResolutionScaleSb.setProgress(Math.round(prefs.getRenderScale() * 100));
         syncShrinkSpinner();
         updatePresetStatus();

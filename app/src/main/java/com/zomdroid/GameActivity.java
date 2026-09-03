@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.View;
@@ -61,6 +62,11 @@ public class GameActivity extends AppCompatActivity implements GamepadManager.Ga
 
     private boolean leftMouseDown  = false;
     private boolean rightMouseDown = false;
+    // Pinch-to-zoom on the game surface: two fingers become mouse-wheel notches, which is
+    // what the game zooms on. While a pinch is in progress single-finger mouse emulation is
+    // suspended, so the second finger is not taken for a click and the spread is not a drag.
+    private ScaleGestureDetector pinchDetector;
+    private boolean pinching = false;
 
     private boolean systemKeyboardVisible = false;
     // Helps to calculate mouse cursor position
@@ -215,6 +221,36 @@ public class GameActivity extends AppCompatActivity implements GamepadManager.Ga
             }
         });
 
+      pinchDetector = new ScaleGestureDetector(this, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+          // One wheel notch per 10% of spread, either way. The game's zoom is a stepped wheel
+          // zoom, so the smooth factor has to be quantised somewhere. RimDroid uses 15%; on
+          // the phone that felt one step too coarse for this game, 10% was picked by hand.
+          private static final float NOTCH = 0.10f;
+          private float accumulated = 0f;
+
+          @Override
+          public boolean onScaleBegin(@NonNull ScaleGestureDetector detector) {
+              accumulated = 0f;
+              return true;
+          }
+
+          @Override
+          public boolean onScale(@NonNull ScaleGestureDetector detector) {
+              accumulated += detector.getScaleFactor() - 1f;
+              while (accumulated > NOTCH) {
+                  accumulated -= NOTCH;
+                  InputNativeInterface.sendMouseScroll(0.0, 1.0);
+              }
+              while (accumulated < -NOTCH) {
+                  accumulated += NOTCH;
+                  InputNativeInterface.sendMouseScroll(0.0, -1.0);
+              }
+              return true;
+          }
+      });
+      // A double-tap-and-drag must stay a double click for the game's inventory, not a zoom.
+      pinchDetector.setQuickScaleEnabled(false);
+
       binding.gameSv.setOnTouchListener(new View.OnTouchListener() {
         //float renderScale = instanceSettings.getRenderScale();
         int activePointerId = -1;
@@ -232,6 +268,30 @@ public class GameActivity extends AppCompatActivity implements GamepadManager.Ga
 
           int action = e.getActionMasked();
           int idx = e.getActionIndex();
+
+          // Fingers only: a real mouse or touchpad has its own wheel and buttons, handled below.
+          if (!isMouseEvent(e, idx)) {
+              pinchDetector.onTouchEvent(e);
+              if (action == MotionEvent.ACTION_POINTER_DOWN && e.getPointerCount() == 2) {
+                  // Second finger down: this is a pinch, not another click. Let go of the
+                  // button the first finger is holding so the spread does not drag anything.
+                  if (leftPressedFinger || leftMouseDown) {
+                      InputNativeInterface.sendMouseButton(GLFWBinding.MOUSE_BUTTON_LEFT.code, false);
+                      leftPressedFinger = false;
+                      leftMouseDown = false;
+                  }
+                  pinching = true;
+                  return true;
+              }
+              if (pinching) {
+                  // Stay silent until every finger is up; only the detector sees the moves.
+                  if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                      pinching = false;
+                      activePointerId = -1;
+                  }
+                  return true;
+              }
+          }
 
           switch (action) {
               case MotionEvent.ACTION_DOWN:

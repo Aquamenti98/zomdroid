@@ -127,7 +127,7 @@ table.
 | Component | Notes |
 |---|---|
 | `libBink2x64.so` | **Not** RAD Game Tools' Bink. An empty stub ELF written for this project ([tools/bink-stub/bink_stub.c](tools/bink-stub/bink_stub.c)) that exists only so the game's `System.loadLibrary("Bink2x64")` succeeds instead of filling the log with stack traces. It contains no code from RAD Game Tools and plays no video. |
-| `libjniwrapper.so`, `libpthread_wrapper.so` | Written for this project — <https://github.com/liamelui/zomdroid-dependencies> |
+| `libjniwrapper.so`, `libpthread_wrapper.so` | Written for this project — <https://github.com/udarmolota/zomdroid-dependencies> |
 | `zomdroid-agent.jar` | Written for this project; embeds Byte Buddy and the ANTLR runtime, both credited above |
 
 ### Bundled third-party mod

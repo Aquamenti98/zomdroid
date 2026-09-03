@@ -595,4 +595,6 @@
     <string name="new_game_instance_detect_failed">Не удалось прочитать ZIP игры. Убедитесь, что это корректный архив Project Zomboid, и попробуйте снова.</string>
 
     <!-- NG_GL4ES renderer offer dialog -->
+    <string name="settings_texture_compression_hint">Сжимает большие текстуры с минимальной потерей качества для экранов смартфонов и даже таблетов. Включает в себя систему кэша, которую можно очищать самостоятельно. Первый заход в игру создаёт кэш и может быть чуть дольше. Кэш общий для ZINK и NG_GL4ES. <b>Примечание:</b> включённая ETC2 делает почти бесполезным включение переменной LIBGL_SHRINK и не рисует «решётку» на текстурах.</string>
+    <string name="settings_texture_compression">Сжатие текстур (ETC2)</string>
 </resources>

@@ -953,6 +953,10 @@ public class InstallerService extends Service implements TaskProgressListener {
         File debugLog = pzLogsDir == null ? null : newestDebugLog(pzLogsDir);
         File prevDebugLog = pzLogsDir == null ? null : newestDebugLog(newestLogArchiveDir(pzLogsDir));
 
+        // Everything below is added by NAME, never by walking a directory, and that is a property
+        // worth keeping: the app's home holds NG_GL4ES's ETC2 texture cache
+        // (C.NGG_ETC2_CACHE_DIR), which is hundreds of megabytes - 879 MB on one device. A report
+        // assembled by sweeping files/ would be unsendable. Add new files one by one.
         try (ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(os, 256 * 1024))) {
             // report.txt — device / build metadata
             // The report must describe the instance it is about, not the app-wide defaults.

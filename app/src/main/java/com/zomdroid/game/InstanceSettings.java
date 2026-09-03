@@ -165,4 +165,19 @@ public class InstanceSettings {
     public void setVibrateOnTouch(boolean enabled) {
         prefs.edit().putBoolean(keyPrefix + "vibrate_on_touch", enabled).apply();
     }
+
+    // --- Texture compression (ETC2) ---------------------------------------------------------
+    // NG_GL4ES and both ZINK variants can keep large textures as ETC2: a quarter of the memory,
+    // encoded once and cached on disk. On by default - the devices it is for (6-8 GB, killed
+    // by the low-memory killer mid-game) are exactly the ones whose owners never type an env
+    // var. The switch is the way out if a device shows artefacts or its disk is tight. No global
+    // counterpart: the setting is newer than the per-instance move, nothing to fall back to.
+
+    public boolean isTextureCompression() {
+        return prefs.getBoolean(keyPrefix + "texture_compression", true);
+    }
+
+    public void setTextureCompression(boolean enabled) {
+        prefs.edit().putBoolean(keyPrefix + "texture_compression", enabled).apply();
+    }
 }
