@@ -1,3 +1,31 @@
+## [1.4.9] - 2026-09-05
+
+### Main features
+✅ **ETC2 texture compression** — on by default for NG_GL4ES and both ZINK renderers. Large textures are kept at **full resolution** in a quarter of the video memory, which is what keeps the game alive on 6–8 GB devices. Comes with a shared on-disk cache (ZINK and NG_GL4ES use the same one) and a **Clear** button in Settings. Can be switched off per instance.
+
+✅ **Pinch to zoom** — two fingers on the game surface zoom the camera.
+
+✅ **Quick Save (F10) on Build 41** — the world backup and restore were Build 42 only and now work on both builds.
+
+✅ **Per-instance settings** — renderer, JVM arguments, environment variables, resolution scale and the memory saver are now stored per game instance. Only the theme stays global. Instance settings moved to the gear icon on the instance card.
+
+✅ **The game's own mouse cursor** — with a mouse attached, the Android pointer is hidden when the game's "Lock cursor to window" option is on, so only the game's cursor is drawn.
+
+---
+
+### Changed
+✅ **NG_GL4ES no longer ships with texture shrinking.** The recommended preset now sets `LIBGL_SHRINK=0`. ETC2 replaces it at the same memory cost but at four times the detail, so the faint grid of seams on the ground is gone.
+
+---
+
+### Technical
+🛠️ Black wet ground and puddles on NG_GL4ES low settings.
+
+🛠️ ZBBetterFPS: removed the one patch that crashed Build 42.20 when its `optimizeIsoMovingObject` option was enabled. The other twelve optimizations are untouched.
+
+🛠️ Bug reports are now built even when no instance is installed.
+
+
 ## [1.4.3] - 2026-07-05
 
 ### Added
