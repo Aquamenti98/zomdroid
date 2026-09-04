@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.PointerIcon;
 import android.view.ScaleGestureDetector;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -169,6 +170,8 @@ public class GameActivity extends AppCompatActivity implements GamepadManager.Ga
         // Scoped to 42.20+ on purpose: the older builds work with the current range and are frozen,
         // so they keep the exact code path they have today and need no retesting.
         GamepadManager.setBipolarTriggers(gameInstance.isBuild4220Plus());
+
+        hideSystemPointerIfGameDrawsItsOwn(gameInstance);
 
         System.loadLibrary("zomdroid");
 
@@ -550,6 +553,46 @@ public class GameActivity extends AppCompatActivity implements GamepadManager.Ga
         if (gamepadManager != null)  gamepadManager.unregister();
         if (keyboardManager != null) keyboardManager.unregister();
         super.onPause();
+    }
+
+    /**
+     * With a mouse attached Android draws its own pointer on top of the game. The game has a
+     * cursor of its own - {@code Mouse.renderCursorTexture()} draws media/ui/cursor_white.png at
+     * the mouse position - but only when its "Lock cursor to window" option is on, and it cannot
+     * hide the system pointer itself: every cursor entry point in our GLFW backend is a stub
+     * ({@code _glfwSetCursorMode} is a NOOP, {@code _glfwCreateCursor} returns false), and the
+     * game never calls them anyway.
+     *
+     * <p>So we hide the system pointer here - but only when the game's option is actually on.
+     * Hiding it unconditionally would leave a player who never enabled that option with no cursor
+     * at all, which is worse than two. The option lives in the instance's own options.ini, so this
+     * follows the game's setting with nothing to configure on our side.
+     */
+    private void hideSystemPointerIfGameDrawsItsOwn(GameInstance gameInstance) {
+        if (!readsLockCursorToWindow(gameInstance)) return;
+        PointerIcon none = PointerIcon.getSystemIcon(this, PointerIcon.TYPE_NULL);
+        // Both views: the pointer is resolved from the view under it, so the controls overlay
+        // would bring the arrow back over itself.
+        binding.gameSv.setPointerIcon(none);
+        binding.inputControlsV.setPointerIcon(none);
+        Log.i(LOG_TAG, "Lock cursor to window is on - hiding the system pointer, the game draws its own");
+    }
+
+    /** {@code lockCursorToWindow=true} in the instance's Zomboid/options.ini. Absent file = false. */
+    private static boolean readsLockCursorToWindow(GameInstance gameInstance) {
+        java.io.File ini = new java.io.File(gameInstance.getHomePath(), "Zomboid/options.ini");
+        if (!ini.isFile()) return false;
+        try {
+            for (String line : java.nio.file.Files.readAllLines(ini.toPath(),
+                    java.nio.charset.StandardCharsets.UTF_8)) {
+                String s = line.trim();
+                if (s.startsWith("lockCursorToWindow"))
+                    return s.endsWith("true");
+            }
+        } catch (Exception e) {
+            Log.w(LOG_TAG, "Could not read options.ini, leaving the system pointer alone", e);
+        }
+        return false;
     }
 
     private boolean isMouseEvent(MotionEvent e, int pointerIndex) {
