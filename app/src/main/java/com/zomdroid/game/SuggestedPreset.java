@@ -28,10 +28,10 @@ import java.util.Locale;
  *
  * <p>ZINK draws a cleaner picture and is genuinely lighter on the GPU. It also only works on
  * Adreno, wants a driver picked by hand, and needs ANGLE on Mali. NG_GL4ES is heavier, but has no
- * preconditions at all and its texture shrinking buys the performance back - at the cost of a
- * faint grid of seams on the ground. Chosen by "how likely is someone to reach a playable state
- * without help", the heavier renderer wins everywhere except Adreno, where ZINK needs nothing
- * special.
+ * preconditions at all and ETC2 texture compression buys the memory back - at full resolution,
+ * which is why the preset no longer turns shrinking on and the grid of seams it used to draw is
+ * gone. Chosen by "how likely is someone to reach a playable state without help", the heavier
+ * renderer wins everywhere except Adreno, where ZINK needs nothing special.
  */
 public enum SuggestedPreset {
 
@@ -39,9 +39,19 @@ public enum SuggestedPreset {
     BUILD_42_QUALITY(R.string.preset_name_b42, LauncherPreferences.Renderer.ZINK_ZFA,
             null, LauncherPreferences.BUILD_42_JVM_ARGS, Boolean.FALSE),
 
-    /** Build 42 everywhere else, and the fallback offered on Adreno when ZINK misbehaves. */
+    /**
+     * Build 42 everywhere else, and the fallback offered on Adreno when ZINK misbehaves.
+     *
+     * <p>Shrinking is switched off rather than cleared: NG_GL4ES now compresses textures with
+     * ETC2, which claims every upload of 512x512 and up at full resolution before the shrink
+     * logic can halve it. The two end up costing the same memory - a half-size RGBA8 texture and
+     * a full-size ETC2 one are both one byte per original pixel - so shrinking no longer buys
+     * anything, it only used to pay for it with the grid of seams on the ground. Writing
+     * {@code LIBGL_SHRINK=0} instead of removing the line keeps the setting visible and one edit
+     * away for anyone who wants it back.
+     */
     BUILD_42_COMPATIBILITY(R.string.preset_name_b42_compat, LauncherPreferences.Renderer.NG_GL4ES,
-            SuggestedPreset.SHRINK_BALANCED, LauncherPreferences.BUILD_42_JVM_ARGS, null),
+            SuggestedPreset.SHRINK_OFF, LauncherPreferences.BUILD_42_JVM_ARGS, null),
 
     /**
      * Build 41. NG_GL4ES does not run on it at all, and ZINK would need an Adreno GPU and a driver,
@@ -60,6 +70,9 @@ public enum SuggestedPreset {
      * not a scale.
      */
     public static final String SHRINK_BALANCED = "7";
+
+    /** No shrinking, stated explicitly - see the note on BUILD_42_COMPATIBILITY. */
+    public static final String SHRINK_OFF = "0";
     public static final String SHRINK_KEY = "LIBGL_SHRINK";
 
     /** Field-proven on every device we have data from; also what the reports run at. */
