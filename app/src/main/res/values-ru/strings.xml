@@ -597,4 +597,19 @@
     <!-- NG_GL4ES renderer offer dialog -->
     <string name="settings_texture_compression_hint">Сжимает большие текстуры с минимальной потерей качества для экранов смартфонов и даже таблетов. Включает в себя систему кэша, которую можно очищать самостоятельно. Первый заход в игру создаёт кэш и может быть чуть дольше. Кэш общий для ZINK и NG_GL4ES. <b>Примечание:</b> включённая ETC2 делает почти бесполезным включение переменной LIBGL_SHRINK и не рисует «решётку» на текстурах.</string>
     <string name="settings_texture_compression">Сжатие текстур (ETC2)</string>
+    <!-- Appended to the Build 42 compatibility preset dialog. -->
+    <string name="preset_confirm_compat_note">\n\nВыставляет рендерер NG_GL4ES: ему не нужно подбирать драйвер, и он совместим со всеми известными GPU.</string>
+    <string name="preset_confirm_title">Применить %1$s?</string>
+    <string name="preset_name_b42_compat">Build 42 — совместимость</string>
+    <string name="preset_confirm_nothing_to_do">Ваши настройки уже совпадают с этим пресетом.</string>
+    <string name="preset_change_renderer">Рендерер: %1$s → %2$s</string>
+    <string name="preset_change_shrink">Ужатие текстур: %1$s → %2$s</string>
+    <string name="preset_change_jvm_args">Аргументы Java: установлены рекомендуемые</string>
+    <string name="preset_change_render_scale">Масштаб разрешения: %1$s → %2$s</string>
+    <string name="preset_change_vulkan_driver">Драйвер Vulkan: %1$s → %2$s</string>
+    <string name="preset_change_memory_saver_on">Экономия памяти: включена</string>
+    <string name="preset_change_memory_saver_off">Экономия памяти: выключена</string>
+    <string name="preset_applied">Пресет применён: %1$s</string>
+    <string name="preset_dialog_gpu_ng">Обнаружено: %1$s. Выставлен рендерер NG_GL4ES — он работает на любом GPU и не требует драйвера. Текстуры сжимаются через ETC2 в полном разрешении, поэтому память экономится без потери качества картинки.</string>
+    <string name="preset_dialog_gpu_ng_unnamed">Выставлен рендерер NG_GL4ES — он работает на любом GPU и не требует драйвера. Текстуры сжимаются через ETC2 в полном разрешении, поэтому память экономится без потери качества картинки.</string>
 </resources>

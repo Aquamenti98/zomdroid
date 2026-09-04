@@ -592,4 +592,19 @@
     <string name="settings_features_title">功能</string>
     <string name="settings_backup_switch">快速存档（F10）</string>
     <string name="game_instance_restore_backup">恢复快速存档备份…</string>
+    <!-- Appended to the Build 42 compatibility preset dialog. -->
+    <string name="preset_confirm_compat_note">\n\n将渲染器设置为 NG_GL4ES：无需挑选驱动，兼容所有已知的 GPU。</string>
+    <string name="preset_confirm_title">应用 %1$s？</string>
+    <string name="preset_name_b42_compat">Build 42 — 兼容模式</string>
+    <string name="preset_confirm_nothing_to_do">你的设置已经与此预设一致。</string>
+    <string name="preset_change_renderer">渲染器：%1$s → %2$s</string>
+    <string name="preset_change_shrink">纹理缩小：%1$s → %2$s</string>
+    <string name="preset_change_jvm_args">Java 参数：已设为推荐值</string>
+    <string name="preset_change_render_scale">分辨率缩放：%1$s → %2$s</string>
+    <string name="preset_change_vulkan_driver">Vulkan 驱动：%1$s → %2$s</string>
+    <string name="preset_change_memory_saver_on">内存节省：开启</string>
+    <string name="preset_change_memory_saver_off">内存节省：关闭</string>
+    <string name="preset_applied">已应用预设：%1$s</string>
+    <string name="preset_dialog_gpu_ng">检测到 %1$s。已设置 NG_GL4ES 渲染器——它可在任何 GPU 上运行，无需驱动。纹理以 ETC2 全分辨率压缩，因此在不损失画质的情况下节省内存。</string>
+    <string name="preset_dialog_gpu_ng_unnamed">已设置 NG_GL4ES 渲染器——它可在任何 GPU 上运行，无需驱动。纹理以 ETC2 全分辨率压缩，因此在不损失画质的情况下节省内存。</string>
 </resources>

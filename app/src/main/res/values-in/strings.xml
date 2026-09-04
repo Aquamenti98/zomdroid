@@ -596,4 +596,19 @@
     <string name="new_game_instance_detect_failed">Tidak dapat membaca ZIP game. Pastikan itu arsip Project Zomboid yang valid dan coba lagi.</string>
 
     <!-- NG_GL4ES renderer offer dialog -->
+    <!-- Appended to the Build 42 compatibility preset dialog. -->
+    <string name="preset_confirm_compat_note">\n\nMengatur renderer NG_GL4ES: tidak perlu memilih driver dan kompatibel dengan semua GPU yang diketahui.</string>
+    <string name="preset_confirm_title">Terapkan %1$s?</string>
+    <string name="preset_name_b42_compat">Build 42 — kompatibilitas</string>
+    <string name="preset_confirm_nothing_to_do">Pengaturan Anda sudah sesuai dengan preset ini.</string>
+    <string name="preset_change_renderer">Renderer: %1$s → %2$s</string>
+    <string name="preset_change_shrink">Pengecilan tekstur: %1$s → %2$s</string>
+    <string name="preset_change_jvm_args">Argumen Java: diatur ke set yang disarankan</string>
+    <string name="preset_change_render_scale">Skala resolusi: %1$s → %2$s</string>
+    <string name="preset_change_vulkan_driver">Driver Vulkan: %1$s → %2$s</string>
+    <string name="preset_change_memory_saver_on">Penghemat memori: aktif</string>
+    <string name="preset_change_memory_saver_off">Penghemat memori: nonaktif</string>
+    <string name="preset_applied">Preset diterapkan: %1$s</string>
+    <string name="preset_dialog_gpu_ng">%1$s terdeteksi. Renderer NG_GL4ES telah diatur — berjalan di GPU apa pun dan tidak perlu driver. Tekstur dikompresi dengan ETC2 pada resolusi penuh, sehingga memori tetap hemat tanpa mengurangi kualitas gambar.</string>
+    <string name="preset_dialog_gpu_ng_unnamed">Renderer NG_GL4ES telah diatur — berjalan di GPU apa pun dan tidak perlu driver. Tekstur dikompresi dengan ETC2 pada resolusi penuh, sehingga memori tetap hemat tanpa mengurangi kualitas gambar.</string>
 </resources>

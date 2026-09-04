@@ -595,4 +595,19 @@
     <string name="new_game_instance_detect_failed">Não foi possível ler o ZIP do jogo. Verifique se é um arquivo válido do Project Zomboid e tente novamente.</string>
 
     <!-- NG_GL4ES renderer offer dialog -->
+    <!-- Appended to the Build 42 compatibility preset dialog. -->
+    <string name="preset_confirm_compat_note">\n\nDefine o renderizador NG_GL4ES: não é preciso escolher um driver e ele é compatível com todas as GPUs conhecidas.</string>
+    <string name="preset_confirm_title">Aplicar %1$s?</string>
+    <string name="preset_name_b42_compat">Build 42 — compatibilidade</string>
+    <string name="preset_confirm_nothing_to_do">Suas configurações já correspondem a este preset.</string>
+    <string name="preset_change_renderer">Renderizador: %1$s → %2$s</string>
+    <string name="preset_change_shrink">Redução de texturas: %1$s → %2$s</string>
+    <string name="preset_change_jvm_args">Argumentos Java: definidos para o conjunto recomendado</string>
+    <string name="preset_change_render_scale">Escala de resolução: %1$s → %2$s</string>
+    <string name="preset_change_vulkan_driver">Driver Vulkan: %1$s → %2$s</string>
+    <string name="preset_change_memory_saver_on">Economia de memória: ligada</string>
+    <string name="preset_change_memory_saver_off">Economia de memória: desligada</string>
+    <string name="preset_applied">Preset aplicado: %1$s</string>
+    <string name="preset_dialog_gpu_ng">%1$s detectada. O renderizador NG_GL4ES foi definido — ele funciona em qualquer GPU e não precisa de driver. As texturas são comprimidas com ETC2 em resolução total, então a memória é economizada sem perda de qualidade.</string>
+    <string name="preset_dialog_gpu_ng_unnamed">O renderizador NG_GL4ES foi definido — ele funciona em qualquer GPU e não precisa de driver. As texturas são comprimidas com ETC2 em resolução total, então a memória é economizada sem perda de qualidade.</string>
 </resources>

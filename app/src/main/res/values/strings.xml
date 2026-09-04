@@ -490,7 +490,7 @@
 
     <string name="preset_confirm_title">Apply %1$s?</string>
     <string name="preset_confirm_nothing_to_do">Your settings already match this preset.</string>
-    <string name="preset_confirm_shrink_note">\n\nOn Build 42 you will see a faint grid of seams on the ground: textures are shrunk so they fit in memory. That is the trade for a stable framerate.</string>
+    <string name="preset_confirm_compat_note">\n\nSets the NG_GL4ES renderer: it needs no driver to be picked and is compatible with every known GPU.</string>
     <string name="preset_change_renderer">Renderer: %1$s → %2$s</string>
     <string name="preset_change_shrink">Texture shrinking: %1$s → %2$s</string>
     <string name="preset_change_jvm_args">Java arguments: set to the recommended set</string>
@@ -565,8 +565,8 @@
     <!-- CPU/GPU autodetect -->
     <string name="preset_dialog_gpu_zink">%1$s detected. ZINK_ZFA renderer and the Vulkan driver that suits your GPU have been set. If the picture looks wrong, try another driver or import your own in Settings.</string>
     <string name="preset_dialog_gpu_zink_unnamed">ZINK_ZFA renderer and a Vulkan driver have been set. If the picture looks wrong, try another driver or import your own in Settings.</string>
-    <string name="preset_dialog_gpu_ng">%1$s detected. NG_GL4ES renderer with texture shrinking has been set — it runs on any GPU and needs no driver. The trade is a faint grid of seams on the ground.</string>
-    <string name="preset_dialog_gpu_ng_unnamed">NG_GL4ES renderer with texture shrinking has been set — it runs on any GPU and needs no driver. The trade is a faint grid of seams on the ground.</string>
+    <string name="preset_dialog_gpu_ng">%1$s detected. The NG_GL4ES renderer has been set — it runs on any GPU and needs no driver. Textures are compressed with ETC2 at full resolution, so memory stays low without the picture suffering.</string>
+    <string name="preset_dialog_gpu_ng_unnamed">The NG_GL4ES renderer has been set — it runs on any GPU and needs no driver. Textures are compressed with ETC2 at full resolution, so memory stays low without the picture suffering.</string>
     <string name="preset_dialog_troubleshoot">If the game will not start with these settings, or closes soon after it does, try a ready-made preset — the button below.</string>
     <string name="preset_dialog_b41_applied">GL4ES renderer has been set — it runs on any GPU and needs no driver setup.</string>
 

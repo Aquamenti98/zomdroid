@@ -577,7 +577,7 @@ public class SettingsFragment extends Fragment {
         StringBuilder message = new StringBuilder();
         for (String change : changes) message.append("• ").append(change).append('\n');
         if (preset == SuggestedPreset.BUILD_42_COMPATIBILITY)
-            message.append(getString(R.string.preset_confirm_shrink_note));
+            message.append(getString(R.string.preset_confirm_compat_note));
 
         new AlertDialog.Builder(requireContext())
                 .setTitle(getString(R.string.preset_confirm_title, name))
